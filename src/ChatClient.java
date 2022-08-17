@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
-public class ChatClient extends JFrame {
+public class ChatClient extends JFrame implements Runnable{
 
     String loginName;
 
@@ -42,7 +42,7 @@ public class ChatClient extends JFrame {
         send.addActionListener(event -> {
             try {
                 if (sendMessage.getText().length() > 0) {
-                    out.writeUTF(loginName + " DATA" + sendMessage.getText());
+                    out.writeUTF(loginName + " DATA " + sendMessage.getText());
                 }
                 sendMessage.setText("");
             } catch (IOException e) {
@@ -69,6 +69,7 @@ public class ChatClient extends JFrame {
         out = new DataOutputStream(socket.getOutputStream());
 
         out.writeUTF(loginName);
+        out.writeUTF(loginName + " LOGIN");
 
         setup();
 
@@ -85,7 +86,18 @@ public class ChatClient extends JFrame {
 
         add(panel);
 
+        new Thread(this).start();
         setVisible(true);
     }
 
+    @Override
+    public void run() {
+        while (true) {
+            try {
+                messages.append("\n" + in.readUTF());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 }

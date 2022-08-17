@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.StringTokenizer;
 
 public class ChatServer {
     ArrayList<String> loginNames;
@@ -35,10 +36,53 @@ public class ChatServer {
 
             loginNames.add(loginName);
             clientSockets.add(clientSocket);
+
+            start();
         }
+
+        public void run() {
+            while (true) {
+                try{
+                    String msgFromClient = in.readUTF();
+                    System.out.println(msgFromClient);
+                    StringTokenizer msgParts = new StringTokenizer(msgFromClient);
+                    String name = msgParts.nextToken();
+                    String msgType = msgParts.nextToken();
+                    StringBuffer messageBuffer = new StringBuffer();
+
+                    while(msgParts.hasMoreTokens()) {
+                        messageBuffer.append(" " + msgParts.nextToken());
+                    }
+
+                    String message = messageBuffer.toString();
+
+                    switch (msgType) {
+                        case "LOGIN":
+                            clientSockets.forEach(socket -> {
+                                notifyLogin(socket, name);
+                            });
+                    }
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    private void notifyLogin(Socket socket, String name) {
+        try {
+            DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+            out.writeUTF(name + " has logged in");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
     public static void main(String[] args) throws IOException{
         new ChatServer();
     }
+    
+    
 }
